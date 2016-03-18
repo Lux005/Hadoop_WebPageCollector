@@ -37,7 +37,8 @@ public class Product implements java.io.Serializable  {
 	public void process()
 	{
 		System.out.println("Fetch Review Pages");
-		fetchReviewPages();
+		if(reviewPages==null || reviewPages.size()==0)
+			fetchReviewPages();
 		System.out.println("Fetch Review End");
 		if(reviewPages!=null&&reviewPages.size()>0)
 		{
@@ -45,6 +46,7 @@ public class Product implements java.io.Serializable  {
 			{
 				rp.process();
 			}
+			System.out.println("Review Pages processeded!");
 			setReady(true);
 		}
 		
@@ -141,7 +143,7 @@ public class Product implements java.io.Serializable  {
 		}
 		System.out.println("Review Pages saved.."+reviewPagesPath.size());
 	}
-	public void loadReviewPages(String filepath)
+	public void loadReviewPages()
 	{
 		if(reviewPagesPath==null)
 			return;

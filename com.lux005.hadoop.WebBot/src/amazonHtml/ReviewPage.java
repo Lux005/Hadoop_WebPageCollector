@@ -28,19 +28,28 @@ public class ReviewPage implements java.io.Serializable{
 
 	public void process()
 	{
-		html=fetchHTML(url);
+		if(html==null||html.length()<=10)
+			html=fetchHTML(url);
 		if(reviews==null)
 			reviews = new ArrayList<Review>();
-		if(html.isEmpty())
+		if(reviews.size()==0)
 		{
-			System.out.println("Unable to Downlad Review Page!");
-			return;
+		if(html.isEmpty())
+			{
+				System.out.println("Unable to Downlad Review Page!");
+				return;
+			}
+		
+		String snum=SearchHTML.Search(html, ">-?[1-9]\\d*</a></li><li class=\"a-last\">");
+			reviews.add(new Review("review_content1",new Date(),new Customer("customer1")));
+			reviews.add(new Review("review_content2",new Date(),new Customer("customer2")));
+			reviews.add(new Review("review_content3",new Date(),new Customer("customer3")));
+			
 		}
-		
-		reviews.add(new Review("review_content1",new Date(),new Customer("customer1")));
-		reviews.add(new Review("review_content2",new Date(),new Customer("customer2")));
-		reviews.add(new Review("review_content3",new Date(),new Customer("customer3")));
-		
+		else
+		{
+			//System.out.println("Review Page already downloaded!");
+		}
 	}
 
 	public String getUrl() {

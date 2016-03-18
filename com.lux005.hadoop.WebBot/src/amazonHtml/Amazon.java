@@ -75,6 +75,7 @@ public class Amazon implements java.io.Serializable {
 		{
 			Product rp=converter.loadObj(file);
 			products.add(rp);
+			rp.loadReviewPages();
 		}
 		System.out.println("Products loaded.."+products.size());
 	}

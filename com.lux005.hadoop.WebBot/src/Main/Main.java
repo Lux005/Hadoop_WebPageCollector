@@ -32,10 +32,12 @@ public class Main {
 		amazon.setProducts(null);
 		converter.saveObj(amazon, amazonPath);
 		amazon.setProducts(pl);
+		
 	}
 	public static void main(String[] args) {
 		loadAmazon();
-		//amazon.addProduct("http://www.amazon.com/gp/product/B008D6YGE4/");
+		amazon.addProduct("http://www.amazon.com/gp/product/B008D6YGE4/");
+		amazon.addProduct("http://www.amazon.com/gp/product/B003YJAZZ4/");
 		amazon.process();
 		saveAmazon();
 		
