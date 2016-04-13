@@ -13,7 +13,7 @@ public class ReviewPage implements java.io.Serializable{
 	private String url,html,productId;
 	private int pageNum;
 	private boolean isReady=false;
-	private List<Review> reviews;
+	private List<String> reviews;
 	public ReviewPage(String url,int pageNum, String productId)
 	{
 		this.setPageNum(pageNum);
@@ -25,32 +25,22 @@ public class ReviewPage implements java.io.Serializable{
 	{
 		return http.Client.sendGet(xurl, "");
 	}
-
+	public void update()
+	{
+		html=fetchHTML(url);
+		reviews= SearchHTML.SearchReviewId(html);
+		html=null;
+		System.out.print(".");
+	}
 	public void process()
 	{
-		if(html==null||html.length()<=10)
-			html=fetchHTML(url);
-		if(reviews==null)
-			reviews = new ArrayList<Review>();
-		if(reviews.size()==0)
+		if(reviews==null||reviews.size()==0)
 		{
-		if(html.isEmpty())
-			{
-				System.out.println("Unable to Downlad Review Page!");
-				return;
-			}
-		
-		String snum=SearchHTML.Search(html, ">-?[1-9]\\d*</a></li><li class=\"a-last\">");
-			reviews.add(new Review("review_content1",new Date(),new Customer("customer1")));
-			reviews.add(new Review("review_content2",new Date(),new Customer("customer2")));
-			reviews.add(new Review("review_content3",new Date(),new Customer("customer3")));
-			
-		}
-		else
-		{
-			//System.out.println("Review Page already downloaded!");
+			update();
+				
 		}
 	}
+
 
 	public String getUrl() {
 		return url;
@@ -65,10 +55,10 @@ public class ReviewPage implements java.io.Serializable{
 		this.html = html;
 	}
 	
-	public List<Review> getReviews() {
+	public List<String> getReviews() {
 		return reviews;
 	}
-	public void setReviews(List<Review> reviews) {
+	public void setReviews(List<String> reviews) {
 		this.reviews = reviews;
 	}
 	public boolean isReady() {

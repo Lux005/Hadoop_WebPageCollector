@@ -14,6 +14,7 @@ public class Amazon implements java.io.Serializable {
 	private List<Product> products;
 	private List<String> productsPath;
 	private String basePath="Amazon";
+	private String allIds="";
 	public List<Product> getProducts() {
 		return products;
 	}
@@ -31,14 +32,39 @@ public class Amazon implements java.io.Serializable {
 		Product p=new Product(producturl);
 		products.add(p);
 	}
-	public void process()
+	public void addProductId(String productid)
+	{
+		System.out.println("adding");
+		if(products==null)
+			products=new ArrayList<Product>();
+		if(allIds==null)
+			allIds=" ";
+		if(!allIds.contains(productid))
+		{
+			Product p=new Product("http://www.amazon.com/gp/product/"+productid+"/");
+			allIds+=" "+productid+" ";
+			products.add(p);
+		}
+		
+	}
+	public void process(String reviewPath)
 	{
 		if(products==null)
 			products=new ArrayList<Product>();
-		System.out.println("process Products..");
+			System.out.println("process Products..");
+			for(Product p: products)
+			{
+				p.process(reviewPath);
+			}
+	}
+	public void update()
+	{
+		System.out.println("update Products..");
+		if(products==null)
+			products=new ArrayList<Product>();
 		for(Product p: products)
 		{
-			p.process();
+			p.update();
 		}
 	}
 	public void saveProducts()
@@ -56,6 +82,7 @@ public class Amazon implements java.io.Serializable {
 			p.saveReviewPages(basePath);
 			List<ReviewPage>rpl=p.getReviewPages();
 			p.setReviewPages(null);
+			p.setProductHtml("");
 			String file=basePath+"/"+p.getProductId()+"/0.product";
 			converter.saveObj(p, file);
 			p.setReviewPages(rpl);

@@ -1,23 +1,34 @@
 package Main;
 
 
+import java.util.ArrayList;
 import java.util.List;
 
+import FileIO.FileIO;
 import amazonHtml.Amazon;
+import amazonHtml.ProcessThread;
 import amazonHtml.Product;
+import amazonHtml.ReviewPage;
 import objFile.ObjFileConverter;
 public class Main {
-	static Amazon amazon;
+	static Amazon amazon=new Amazon();
 	static String amazonPath="Amazon/all.products";
+	static String reviewPath="Amazon/reviews/";
+	static String pidListPath="Amazon/list.pids";
+	static String oldPidListPath="Amazon/old.pids";
+	static int MULTITHREADING=5;
+	static List<String> pidList=new ArrayList<String>();
+	static List<String> oldPidList=new ArrayList<String>();
 	public static void loadAmazon()
 	{
 		ObjFileConverter<Amazon> converter=new ObjFileConverter<Amazon>();
 		try {
 			amazon=converter.loadObj(amazonPath);
-			amazon.loadProducts();
+			if(amazon!=null)
+				amazon.loadProducts();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 		if(amazon==null)
 			amazon=new Amazon();
@@ -34,44 +45,75 @@ public class Main {
 		amazon.setProducts(pl);
 		
 	}
+	private static void loadPidList()
+	{
+		pidList=FileIO.readFileToString(pidListPath);
+		oldPidList=FileIO.readFileToString(oldPidListPath);
+		
+	}
+	private static void savePidList()
+	{
+		FileIO plf=new FileIO(pidListPath);
+		if(plf.isReady())
+		{
+			for(String s:oldPidList)
+			{
+				plf.println(s);
+			}
+			plf.close();
+		}
+		else
+			System.out.println("Can't save old pid list to file!");
+	}
+	private static void processPidList()
+	{
+		//List<String> nPidList=new ArrayList<String>();
+	
+		for(String s:pidList)
+		{
+			if(s!=null&&!s.isEmpty()&&!oldPidList.contains(s))
+			{
+				amazon.addProductId(new String(s));
+			}
+				
+		}
+		List<ProcessThread> proThreads=new ArrayList<ProcessThread>();
+		for(Product p:amazon.getProducts())
+		{
+			if(proThreads.size()<MULTITHREADING)
+			{
+				ProcessThread t=new ProcessThread(p,reviewPath);
+				proThreads.add(t);
+				t.start();
+			}else
+			{
+				int i=-1;
+				while(i<0)
+				{
+					for(int j=0;j<MULTITHREADING;j++)
+					{
+						if(!proThreads.get(j).running)
+						{
+							i=j;
+							 proThreads.set(j,null);
+							break;
+						}
+					}
+				}
+				ProcessThread t=new ProcessThread(p,reviewPath);
+				proThreads.set(i, t);
+				t.start();
+			}
+		}
+	}
 	public static void main(String[] args) {
-		loadAmazon();
-		amazon.addProduct("http://www.amazon.com/gp/product/B008D6YGE4/");
-		amazon.addProduct("http://www.amazon.com/gp/product/B003YJAZZ4/");
-		amazon.process();
-		saveAmazon();
-		
-		
-		
-		
+		//loadAmazon();
+		//amazon.addProductId("");
+		//amazon.process(reviewPath);
+		//saveAmazon();
+		loadPidList();
+		processPidList();
+		savePidList();
 		return;
-//	List<Product> ss=new ArrayList<Product>();
-//	ss.add(new Product("p1"));
-//	ss.add(new Product("p2"));
-//	ss.add(new Product("p3"));
-//	ss.add(new Product("p4"));
-//	ObjFileConverter<Product> converter=new ObjFileConverter<Product>();
-//	converter.saveObjList(ss, "xxx.xml");
-//		try {
-//			List<Product> sn=converter.loadObjList("xxx.xml");
-//			for(Product s:sn)
-//			{
-//			//	System.out.println(s.ss.get(0));
-//			}
-//		} catch (Exception e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//	
-//	
-		//File.Reader.readFileByLines("",url_list);
-		
-        //GET
-        //String s=Http.Client.sendGet("http://www.amazon.com/Tissot-T0394171105702-Stainless-Steel-Watch/product-reviews/B00842V3QG/ref=cm_cr_dp_see_all_btm?ie=UTF8&showViewpoints=1&sortBy=recent", "");
-        //System.out.println(s);
-      
-        //POST
-       // String sr=Http.Client.sendPost("http://localhost:6144/Home/RequestPostString", "key=123&v=456");
-       //System.out.println(sr);
     }
 }

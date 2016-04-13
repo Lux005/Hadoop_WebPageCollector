@@ -30,7 +30,8 @@ public class ObjFileConverter<T> {
 	        	//System.out.printf("Serialized data is saved");
 	      }catch(IOException i)
 	      {
-	          i.printStackTrace();
+	    	  System.out.println("failed to save list");
+	         // i.printStackTrace();
 	      }
 		return false;
 	}
@@ -51,10 +52,12 @@ public class ObjFileConverter<T> {
 		     fileIn.close();
 	      }catch(IOException i)
 	      {
-	         i.printStackTrace();
+	    	  System.out.println("io: failed to load list");
+	      //   i.printStackTrace();
 	      }catch(ClassNotFoundException c)
 	      {
-	         c.printStackTrace();
+	    	  System.out.println(" class not found");
+	        // c.printStackTrace();
 	      }
 		 
 		  return objList;
@@ -78,7 +81,8 @@ public class ObjFileConverter<T> {
 	        	//System.out.printf("Serialized data is saved");
 	      }catch(IOException i)
 	      {
-	          i.printStackTrace();
+	    	  System.out.println("io: failed to save obj");
+	         // i.printStackTrace();
 	      }
 		return false;
 	}
@@ -95,11 +99,12 @@ public class ObjFileConverter<T> {
 		     fileIn.close();
 	      }catch(IOException i)
 	      {
-	         i.printStackTrace();
+	    	  System.out.println("io: failed to load obj");
+	         //i.printStackTrace();
 	      }catch(ClassNotFoundException c)
 	      {
-	         System.out.println("Employee class not found");
-	         c.printStackTrace();
+	         System.out.println(" class not found");
+	        // c.printStackTrace();
 	      }
 		  return obj;
 	}

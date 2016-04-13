@@ -3,6 +3,7 @@ package amazonHtml;
 import java.util.ArrayList;
 import java.util.List;
 
+import FileIO.FileIO;
 import objFile.ObjFileConverter;
 
 public class Product implements java.io.Serializable  {
@@ -13,12 +14,24 @@ public class Product implements java.io.Serializable  {
 	/**
 	 * 
 	 */
-	private String productUrl,productHtml,productName,productId;
+	private String productUrl,productHtml,productId;
+	public String getProductUrl() {
+		return productUrl;
+	}
+	public void setProductUrl(String productUrl) {
+		this.productUrl = productUrl;
+	}
+	public String getProductHtml() {
+		return productHtml;
+	}
+	public void setProductHtml(String productHtml) {
+		this.productHtml = productHtml;
+	}
 	private String reviewUrl,reviewHtml;
 	private boolean isReady;
 	private List<ReviewPage> reviewPages;
 	private List<String> reviewPagesPath;
-	private int reviewPageCount,savedSize;
+	public int savedReviews=0;
 	public List<ReviewPage> getReviewPages() {
 		return reviewPages;
 	}
@@ -29,27 +42,68 @@ public class Product implements java.io.Serializable  {
 	public Product(String url)
 	{
 		this.productUrl=url;
+
+	}
+	public void update()
+	{
 		System.out.println("Fetch HTML");
 		productHtml=fetchHTML(productUrl);
 		System.out.println("Fetch Product ID");
 		fetchProductId();
-	}
-	public void process()
-	{
 		System.out.println("Fetch Review Pages");
-		if(reviewPages==null || reviewPages.size()==0)
-			fetchReviewPages();
+		fetchReviewPages();
 		System.out.println("Fetch Review End");
 		if(reviewPages!=null&&reviewPages.size()>0)
 		{
 			for(ReviewPage rp:reviewPages)
 			{
-				rp.process();
+				rp.update();
 			}
-			System.out.println("Review Pages processeded!");
+			System.out.println("Review Pages downloaded!");
 			setReady(true);
 		}
+	}
+	public void process(String reviewPath)
+	{
 		
+		if(productId==null||productId.isEmpty()||reviewPages==null||reviewPages.size()==0)
+		{
+			update();
+		}
+		else{
+			if(reviewPages!=null&&reviewPages.size()>0)
+			{
+				for(ReviewPage rp:reviewPages)
+				{
+					rp.process();
+				}
+				System.out.println("Review Pages processeded!");
+				setReady(true);
+			}
+		}
+		 saveReviews(reviewPath);
+	}
+	private void saveReviews(String reviewPath)
+	{
+		if(productId!=null&&!productId.isEmpty())
+		{
+			FileIO file=new FileIO(reviewPath+productId+".reviews");
+			if(file.isReady())
+			{
+				for(ReviewPage rp:reviewPages)
+				{
+					//System.out.println(rp.getReviews().size());
+					for(String r:rp.getReviews())
+					{
+						savedReviews++;
+						//System.out.println(pid+" "+r);
+						file.println(productId+" "+r);
+					}
+				}
+			}
+			file.close();
+			
+		}
 	}
 	private String fetchHTML(String xurl)
 	{
@@ -62,23 +116,23 @@ public class Product implements java.io.Serializable  {
 			System.out.println("Unable to Downlad Product Page!");
 			return;
 		}
-		String slink=SearchHTML.Search(productHtml,"<link rel=\"canonical\"(.*)/>");
-		String surl=SearchHTML.Search(slink, "(http:\\/\\/)[^\\s|\"|?]+");
-		if(!surl.isEmpty())
-			productUrl=surl;
-		String sdp=SearchHTML.Search(surl, "dp/\\w+");
-		String sdp2=SearchHTML.Search(sdp, "/\\w+");
-		String sid=SearchHTML.Search(sdp2, "\\w+");
-		if(!sid.isEmpty())
+		productUrl=SearchHTML.SearchProductUrl(productHtml);
+		productId=SearchHTML.SearchProductId(productHtml);
+		if(!productId.isEmpty())
 		{
-			productId=sid;
-			System.out.println("Product id="+sid);
+			System.out.println("Product id="+productId);
+		}
+		else
+		{
+			System.out.println("Unable to Fetch Product ID!");
 		}
 	}
 	private void fetchReviewPages()
 	{
 		if(reviewPages==null)
 			reviewPages=new ArrayList<ReviewPage>();
+		else
+			reviewPages.clear();
 		if(productUrl.isEmpty())
 			return;
 		reviewUrl=productUrl.replace("/dp/", "/product-reviews/");
@@ -89,41 +143,33 @@ public class Product implements java.io.Serializable  {
 			return;
 		}
 		//System.out.println("reviewHtml!"+reviewHtml);
-		String snum=SearchHTML.Search(reviewHtml, ">-?[1-9]\\d*</a></li><li class=\"a-last\">");
-		if(snum.isEmpty())
-		{
-			System.out.println("Cannot find reviews!");
-			reviewPageCount=0;
-			return;
-		}
-		String snum2=SearchHTML.Search(snum, "-?[1-9]\\d*");
-		if(snum2.isEmpty())
+		int snum=SearchHTML.SearchPageNum(reviewHtml);
+		if(snum<1)
 		{
 			System.out.println("page number is empty!");
 			return;
 		}
-		int r=Integer.parseInt(snum2);
-		if(r>0)
-			reviewPageCount=r;
 		reviewPages.clear();
-		for(int i=1;i<=r;i++)
+		if(snum>0)
 		{
-			String rpurl=reviewUrl+
-					"/ref=cm_cr_arp_d_paging_btm_"+
-					i+"?ie=UTF8&showViewpoints=1&sortBy=recent&"+
-					"pageNumber="+i;
-			ReviewPage rp= new ReviewPage(rpurl,i,productId);
-			reviewPages.add(rp);
+			for(int i=1;i<=snum;i++)
+			{
+				String rpurl=reviewUrl+
+						"/ref=cm_cr_arp_d_paging_btm_"+
+						i+"?ie=UTF8&showViewpoints=1&sortBy=recent&"+
+						"pageNumber="+i;
+				ReviewPage rp= new ReviewPage(rpurl,i,productId);
+				reviewPages.add(rp);
+			}
 		}
-		if(reviewPages.size()==r)
+		if(reviewPages.size()==snum)
 		{
-			System.out.println(r+" Review Pages Updated.");
+			System.out.println(snum+ " Review Pages Updated.");
 		}else
 		{
 			System.out.println("Review Pages Unable to Update.");
 		}
-			
-		
+		reviewHtml=null;
 	}
 	public void saveReviewPages(String basePath)
 	{
@@ -136,6 +182,7 @@ public class Product implements java.io.Serializable  {
 		for(int i=0;i<reviewPages.size();i++)
 		{
 			ReviewPage rp=reviewPages.get(i);
+			rp.setHtml("");
 			String file=basePath+"/"+productId.toString()+"/"+(i+1)+
 					".reviewpages";
 			converter.saveObj(rp, file);
