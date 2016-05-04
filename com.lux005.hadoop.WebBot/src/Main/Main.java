@@ -12,13 +12,15 @@ import amazonHtml.ReviewPage;
 import objFile.ObjFileConverter;
 public class Main {
 	static Amazon amazon=new Amazon();
-	static String amazonPath="Amazon/all.products";
-	static String reviewPath="Amazon/reviews/";
-	static String pidListPath="Amazon/list.pids";
-	static String oldPidListPath="Amazon/old.pids";
-	static int MULTITHREADING=5;
+	static String amazonPath="Amazon/all.products";//amazon object file
+	static String reviewPath="Amazon/reviews/";//reviews for products
+	static String pidListPath="Amazon/list.pids";//product id list to be processed
+	static String historyPidListPath="Amazon/history.pids";//processed product id list
+	static int MULTITHREADING=5;//number of process threads
 	static List<String> pidList=new ArrayList<String>();
-	static List<String> oldPidList=new ArrayList<String>();
+	static List<String> historyPidList=new ArrayList<String>();
+	//load saved amazon class object
+	//tested but not used
 	public static void loadAmazon()
 	{
 		ObjFileConverter<Amazon> converter=new ObjFileConverter<Amazon>();
@@ -33,6 +35,8 @@ public class Main {
 		if(amazon==null)
 			amazon=new Amazon();
 	}
+	//save amazon class object
+	//tested but not used
 	public static void saveAmazon()
 	{
 		if(amazon==null)
@@ -45,46 +49,54 @@ public class Main {
 		amazon.setProducts(pl);
 		
 	}
+	//load all the product id from the list file
+	//newList: items to be processed.
+	//oldList: items have been processed.
 	private static void loadPidList()
 	{
 		pidList=FileIO.readFileToString(pidListPath);
-		oldPidList=FileIO.readFileToString(oldPidListPath);
+		historyPidList=FileIO.readFileToString(historyPidListPath);
 		
 	}
-	private static void savePidList()
-	{
-		FileIO plf=new FileIO(pidListPath);
-		if(plf.isReady())
-		{
-			for(String s:oldPidList)
-			{
-				plf.println(s);
-			}
-			plf.close();
-		}
-		else
-			System.out.println("Can't save old pid list to file!");
-	}
+	
+	//process each product id using multithreads
 	private static void processPidList()
 	{
 		//List<String> nPidList=new ArrayList<String>();
 	
 		for(String s:pidList)
 		{
-			if(s!=null&&!s.isEmpty()&&!oldPidList.contains(s))
+			if(s!=null&&!s.isEmpty()&&!historyPidList.contains(s))
 			{
 				amazon.addProductId(new String(s));
 			}
 				
 		}
+		FileIO plf=new FileIO(historyPidListPath);
+		if(!plf.isReady())
+		{
+			System.out.println("Can't open file to save old pid list!");
+			return;
+		}
+		for(String s:historyPidList)
+		{
+			plf.println(s);
+		}
+		
+		
 		List<ProcessThread> proThreads=new ArrayList<ProcessThread>();
+		List<String> threadPids=new ArrayList<String>();
 		for(Product p:amazon.getProducts())
 		{
 			if(proThreads.size()<MULTITHREADING)
 			{
-				ProcessThread t=new ProcessThread(p,reviewPath);
-				proThreads.add(t);
-				t.start();
+				if(p.getProductId()!=null && p.getProductId().length()>5)
+				{
+					ProcessThread t=new ProcessThread(p,reviewPath);
+					proThreads.add(t);
+					threadPids.add(p.getProductId());
+					t.start();
+				}
 			}else
 			{
 				int i=-1;
@@ -95,16 +107,42 @@ public class Main {
 						if(!proThreads.get(j).running)
 						{
 							i=j;
-							 proThreads.set(j,null);
+							historyPidList.add(threadPids.get(j));
+							if(proThreads.get(j).success)
+								plf.println(threadPids.get(j));
+							proThreads.set(j,null);
 							break;
 						}
 					}
 				}
 				ProcessThread t=new ProcessThread(p,reviewPath);
+				threadPids.set(i,p.getProductId());
 				proThreads.set(i, t);
 				t.start();
 			}
 		}
+		while(proThreads.size()>0)
+		{
+			for(int j=0;j<proThreads.size();j++)
+			{
+				if(proThreads.get(j)!=null)
+				{
+					if(!proThreads.get(j).running)
+					{
+						historyPidList.add(threadPids.get(j));
+						if(proThreads.get(j).success)
+							plf.println(threadPids.get(j));
+						proThreads.remove(j);
+						break;
+					}
+				}else
+				{
+					proThreads.remove(j);
+				}
+			}
+		}
+		if(plf!=null)
+			plf.close();
 	}
 	public static void main(String[] args) {
 		//loadAmazon();
@@ -113,7 +151,6 @@ public class Main {
 		//saveAmazon();
 		loadPidList();
 		processPidList();
-		savePidList();
 		return;
     }
 }

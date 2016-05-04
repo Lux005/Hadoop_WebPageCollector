@@ -10,7 +10,7 @@ public class ReviewPage implements java.io.Serializable{
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private String url,html,productId;
+	private String url,html;
 	private int pageNum;
 	private boolean isReady=false;
 	private List<String> reviews;
@@ -18,7 +18,6 @@ public class ReviewPage implements java.io.Serializable{
 	{
 		this.setPageNum(pageNum);
 		this.url=url;
-		this.productId=productId;
 		
 	}
 	private String fetchHTML(String xurl)
@@ -30,7 +29,7 @@ public class ReviewPage implements java.io.Serializable{
 		html=fetchHTML(url);
 		reviews= SearchHTML.SearchReviewId(html);
 		html=null;
-		System.out.print(".");
+		//System.out.print(".");
 	}
 	public void process()
 	{

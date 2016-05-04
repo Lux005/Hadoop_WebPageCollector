@@ -38,8 +38,10 @@ public class SearchHTML {
 	public static String SearchProductId(String html)
 	{
 		String surl=SearchProductUrl(html);
-		String sdp=SearchHTML.Search(surl, "dp/\\w+");
-		sdp=sdp.replace("dp/", "");
+		System.out.println(html);
+		String sdp=SearchHTML.Search(surl, "ue_url='/gp/product/\\w+");
+		System.out.println(sdp);
+		sdp=sdp.replace("ue_url='/gp/product/", "");
 		return sdp;
 	}
 	public static int SearchPageNum(String html)

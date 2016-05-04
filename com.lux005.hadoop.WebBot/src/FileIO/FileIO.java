@@ -33,6 +33,7 @@ public class FileIO {
 	{
 		if(c!=null&&out!=null)
 		    out.println( c );	
+		out.flush();
 	}
 	static private void checkDir(String filepath)
 	{

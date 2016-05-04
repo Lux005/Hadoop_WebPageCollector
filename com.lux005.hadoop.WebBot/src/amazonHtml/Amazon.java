@@ -34,14 +34,14 @@ public class Amazon implements java.io.Serializable {
 	}
 	public void addProductId(String productid)
 	{
-		System.out.println("adding");
+		//System.out.println("adding");
 		if(products==null)
 			products=new ArrayList<Product>();
 		if(allIds==null)
 			allIds=" ";
 		if(!allIds.contains(productid))
 		{
-			Product p=new Product("http://www.amazon.com/gp/product/"+productid+"/");
+			Product p=new Product(productid);
 			allIds+=" "+productid+" ";
 			products.add(p);
 		}
